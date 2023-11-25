@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(logger);
 
 app.get('/', (req, res) => {
-  res.status(200).send("Welcome to my portfolio api.")
+  res.status(200).send("These are not the droids you are looking for...")
 })
 
 app.use('/api/v1', apiRoutes);
