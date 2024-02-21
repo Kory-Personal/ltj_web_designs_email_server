@@ -1,8 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const nodemailer = require('nodemailer');
 const axios = require('axios');
 require('dotenv').config();
+const nodemailer = require('nodemailer');
+
+const cwd = process.cwd();
+
+const modelFinder = require(`${cwd}/middleware/model-finder.js`);
+
+router.param('model', modelFinder.load);
+
+router.get("/:model", getEmails);
+router.post("/:model", sendEmail);
+router.put('/:model/:id', updateOne);
+router.delete('/:model/:id', deleteOne);
+
+router.get("/models", (req, res) => {
+  modelFinder.list()
+    .then(models => res.status(200).json(models));
+})
+
 
 const transport = {
   host: 'smtp.gmail.com',//grab smtp host of gmail
@@ -25,22 +42,27 @@ transporter.verify((error, success) => {
   }
 })
 
-router.get('/verify', emailVerify);
-router.post('/send', sendEmail);
+// router.get('/verify', emailVerify);
+// router.post('/send', sendEmail);
 
 async function sendEmail(req, res) {
   try {
-    console.log(req.body);
-    let { name, email, number, message } = req.body;
-    let content = `Name: ${name} \n Email: ${email} \n Phone Number: ${number} \n Content: ${message}`;
-
+    let { first, last, email, number, message } = req.body;
+    let content = `Name: ${first} ${last} \n Email: ${email} \n Phone Number: ${number} \n Content: ${message}`;
+    let value = {
+      name: first + last,
+      email: email,
+      number: number,
+      message: message
+    }
     let mail = {
-      from: name,
+      from: first + last,
       to: process.env.EMAIL,
-      subject: 'New Contact from ' + name,
+      subject: 'New Contact from ' + first + last,
       text: content
     }
-
+    const response = await req.model.post(value);
+    
     transporter.sendMail(mail, (err, data) => {
       if (err) {
         res.json({
@@ -52,31 +74,39 @@ async function sendEmail(req, res) {
         })
       }
     })
+    res.status(200).send(response);
   } catch (e) {console.error(e)}
 }
 
-async function emailVerify(req, res) {
+async function getEmails(req, res) {
   try {
-    console.log(req.query.email)
-    const emailAddress = req.query.email;
-    const API_KEY = process.env.API_KEY
-    const API_URL = process.env.API_URL
-    const results = await axios(
-      {
-      method: 'GET',
-      url: `${API_URL}?email=${emailAddress}`,
-      headers: {
-          Authorization: `Bearer ${API_KEY}`
-      }
-      })
-    console.log({results})
-    if (results.data.status === 'valid') {
-      res.status(200).send(results.data.status);
-    } else {
-      res.status(500).send(results.data.status);
-    }
-  } catch (e) {'Boo'}
     
+    const response = await req.model.get();
+    const results = {
+      count: response.length,
+      results: response,
+    }
+    res.status(200).json(results);
+  } catch (e) {console.error(e)}
 }
+
+async function updateOne(req, res) {
+  try {
+
+    const currentID = req.params.id;
+    const response = await req.model.put(currentID, req.body)
+    res.status(200).json(response);
+  } catch (e) {console.error(e)}
+}
+
+async function deleteOne(req, res) {
+  try {
+
+    const currentID = req.params.id;
+    const response = await req.model.delete(currentID);
+    res.status(200).json(response);
+  } catch (e) {console.error(e)}
+}
+
 
 module.exports = router;
