@@ -28,6 +28,9 @@ const transport = {
   auth: {
     user: process.env.EMAIL,
     pass: process.env.PASSWORD,
+  },
+  tls: {
+    rejectUnauthorized: false
   }
 }
 
@@ -43,30 +46,13 @@ transporter.verify((error, success) => {
   }
 })
 
-// router.get('/verify', emailVerify);
-// router.post('/send', sendEmail);
-
 async function verifyRecapthca(req, res) {
   try {
     let { token, action} = req.body;
-    // let url = `https://recaptchaenterprise.googleapis.com/v1/projects/ltj-web-designs/assessments?key=${process.env.REACT_APP_SITE_KEY}`
     let url = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.SECRET_KEY}&response=${token}`
     
     const response = await axios.post(url);
 
-    // let event = {
-    //   token,
-    //   expectedAction: action,
-    //   siteKey: process.env.SECRET_KEY
-    // }
-    // const response = await axios({
-    //   method: 'POST',
-    //   url: url,
-    //   headers: {
-    //     'Content-Type': 'application/json; charset=utf-8'
-    //   },
-    //   data: event
-    // })
     let verification = response.data.success
 
     res.status(200).send(verification)
@@ -95,16 +81,16 @@ async function sendEmail(req, res) {
     
     transporter.sendMail(mail, (err, data) => {
       if (err) {
-        res.json({
+        res.status(400).json({
           status: 'fail'
         })
       } else {
-        res.json({
-          status: 'success'
+        res.status(200).json({
+          status: 'success',
+          response
         })
       }
     })
-    res.status(200).send(response);
   } catch (e) {console.error(e)}
 }
 
