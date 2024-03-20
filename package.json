@@ -11,15 +11,13 @@
     "start": "node index.js"
   },
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Kory-Personal/portfolio-server.git"
+    "type": "git"
   },
   "author": "Kory Jackson",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Kory-Personal/portfolio-server/issues"
   },
-  "homepage": "https://github.com/Kory-Personal/portfolio-server#readme",
   "dependencies": {
     "axios": "^0.21.1",
     "body-parser": "^1.19.0",
